@@ -1,3 +1,6 @@
+require('dotenv').config();
+// remove this after you've confirmed it is working
+console.log(process.env.SECRET);
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
@@ -22,8 +25,8 @@ const userSchema = new mongoose.Schema({
     password: String
 });
 
-const secret = "This_is_my_mongoose_encryption_trial"; 
-userSchema.plugin(encrypt, { secret: secret, encryptedFields: ["password"]});
+
+userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ["password"]});
 
 const User = new mongoose.model("User", userSchema);
 
