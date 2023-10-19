@@ -37,7 +37,8 @@ mongoose.connect("mongodb://127.0.0.1:27017/userDB", {
 const userSchema = new mongoose.Schema({
     email: String,
     password: String,
-    googleId: String
+    googleId: String,
+    secret: String
 });
 
 userSchema.plugin(passportLocalMongoose);
@@ -93,14 +94,6 @@ app.get("/register", function (req, res) {
     res.render("register");
 });
 
-app.get("/secrets", function (req, res) {
-    if (req.isAuthenticated()) {
-        res.render("secrets");
-    } else {
-        res.redirect("/login");
-    }
-});
-
 app.post("/register", function (req, res) {
 
     User.register({ username: req.body.username }, req.body.password, function (err, user) {
@@ -114,6 +107,46 @@ app.post("/register", function (req, res) {
         }
     });
 });
+
+app.get("/secrets", async function (req, res) {
+    try {
+        const foundUsers = await User.find({ secret: { $ne: null } });
+
+        if (foundUsers) {
+            res.render("secrets", { usersWithSecrets: foundUsers });
+        }
+    } catch (err) {
+        console.error(err);
+        // Handle the error appropriately
+    }
+});
+
+
+app.get("/submit", function (req, res) {
+    if (req.isAuthenticated()) {
+        res.render("submit");
+    } else {
+        res.redirect("/login");
+    }
+});
+
+app.post("/submit", async function (req, res) {
+    try {
+        const submittedSecret = req.body.secret;
+        console.log(req.user.id);
+        // Use await to wait for the promise to resolve
+        const foundUser = await User.findById(req.user.id);
+        if (foundUser) {
+            foundUser.secret = submittedSecret;
+            await foundUser.save();
+            res.redirect("/secrets");
+        }
+    } catch (err) {
+        console.error(err);
+        // Handle the error appropriately
+    }
+});
+
 
 app.get("/login", function (req, res) {
     res.render("login");
